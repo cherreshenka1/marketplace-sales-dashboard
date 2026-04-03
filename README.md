@@ -3,6 +3,10 @@
 Портфолио-проект "Первый Селлер" — дашборд продаж маркетплейса с тёмной темой,
 аналитикой, Telegram-уведомлениями и фильтрами.
 
+## Живая версия
+
+[https://cherreshenka1.github.io/marketplace-sales-dashboard/](https://cherreshenka1.github.io/marketplace-sales-dashboard/)
+
 ## Что есть
 
 - KPI-метрики: выручка, заказы, конверсия, средний чек
