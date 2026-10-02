@@ -1,3 +1,4 @@
+import OpenContext from './OpenContext.jsx'
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArcElement,
@@ -96,9 +97,9 @@ export default function App() {
       {
         label: 'Выручка',
         data: chartSeries.revenue,
-        borderColor: '#8b5cf6',
-        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-        pointBackgroundColor: '#c4b5fd',
+        borderColor: '#527566',
+        backgroundColor: 'rgba(82, 117, 102, 0.12)',
+        pointBackgroundColor: '#527566',
         fill: true,
         tension: 0.45,
       },
@@ -111,8 +112,8 @@ export default function App() {
       {
         label: 'Заказы',
         data: chartSeries.orders,
-        borderRadius: 14,
-        backgroundColor: 'rgba(14, 165, 233, 0.8)',
+        borderRadius: 3,
+        backgroundColor: '#72909b',
       },
     ],
   }
@@ -127,7 +128,7 @@ export default function App() {
           filteredOrders.filter((order) => order.status === 'Новый').length,
           filteredOrders.filter((order) => order.status === 'Отменён').length,
         ],
-        backgroundColor: ['#22c55e', '#06b6d4', '#8b5cf6', '#ef4444'],
+        backgroundColor: ['#668472', '#6c8f9d', '#527566', '#ad7965'],
         borderWidth: 0,
       },
     ],
@@ -138,7 +139,7 @@ export default function App() {
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        labels: { color: '#cbd5e1', boxWidth: 14, usePointStyle: true },
+        labels: { color: '#65746d', boxWidth: 14, usePointStyle: true },
       },
     },
     scales: {
@@ -298,6 +299,7 @@ export default function App() {
             </div>
           </article>
         </section>
+        <OpenContext/>
       </main>
     </div>
   )
