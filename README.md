@@ -1,37 +1,36 @@
-# Marketplace Sales Dashboard
+# marketplace-sales-dashboard
 
-Портфолио-проект "Первый Селлер" — дашборд продаж маркетплейса с тёмной темой,
-аналитикой, Telegram-уведомлениями и фильтрами.
+Самостоятельный интерактивный проект: продажи по дням.
 
-## Живая версия
+[Открыть сайт](https://cherreshenka1.github.io/marketplace-sales-dashboard/) · [Кейс](https://cherreshenka1.github.io/portfolio/projects/marketplace-sales-dashboard/) · [Промпт и критерии доработки](https://github.com/cherreshenka1/portfolio/blob/main/prompts/marketplace-sales-dashboard.md)
 
-[https://cherreshenka1.github.io/marketplace-sales-dashboard/](https://cherreshenka1.github.io/marketplace-sales-dashboard/)
+## Сценарий
 
-## Что есть
+Выбрать период и статус, сверить сумму с заказами, скачать настоящий CSV.
 
-- KPI-метрики: выручка, заказы, конверсия, средний чек
-- Графики продаж и структуры заказов на Chart.js
-- Таблица последних заказов
-- Фильтры по периоду и статусу
-- Имитация экспорта в Excel
-- Имитация уведомлений от Telegram-бота
-- Сохранение пользовательских фильтров в localStorage
+Период и статус применяются одновременно к заказам, показателям и графикам. Отменённые заказы исключены из выручки; CSV содержит выбранный набор.
 
-## Запуск
+## Границы
 
-```bash
-npm install
+Данные демонстрационные. Подключения к маркетплейсу и Telegram нет.
+
+## Проверить вручную
+
+1. Выбрать период.
+2. Выбрать статус.
+3. Сверить заказы и график.
+4. Скачать CSV.
+
+Проверены основной сценарий и адаптивная вёрстка при ширине 390 и 1280 px. Это проверка прототипа, а не сертификация готовности к промышленной эксплуатации.
+
+## Разработка
+
+React 18, Vite 5. Node.js 20+.
+
+```sh
+npm ci
 npm run dev
-```
-
-## Сборка
-
-```bash
 npm run build
 ```
 
-## Деплой
-
-```bash
-npm run deploy
-```
+`npm run deploy` собирает приложение и публикует `dist` в ветку `gh-pages` текущего репозитория.

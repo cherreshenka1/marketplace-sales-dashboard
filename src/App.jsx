@@ -12,7 +12,7 @@ import {
   Tooltip,
 } from 'chart.js'
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
-import { botAlerts, orders, salesSeries } from './data.js'
+import { botAlerts, orders } from './data.js'
 
 ChartJS.register(
   ArcElement,
@@ -44,27 +44,16 @@ function readSavedFilters() {
 
 export default function App() {
   const [filters, setFilters] = useState(readSavedFilters)
-  const [exportState, setExportState] = useState('Экспорт в Excel')
+  const [exportState, setExportState] = useState('Скачать CSV')
   const [alerts, setAlerts] = useState(botAlerts)
 
   useEffect(() => {
     localStorage.setItem(FILTER_KEY, JSON.stringify(filters))
   }, [filters])
 
-  useEffect(() => {
-    const timerId = window.setInterval(() => {
-      setAlerts((current) => {
-        const [firstAlert, ...rest] = current
-        return [...rest, firstAlert]
-      })
-    }, 5000)
-
-    return () => window.clearInterval(timerId)
-  }, [])
-
   const filteredOrders = useMemo(() => {
     const cutoff = new Date('2026-04-03')
-    cutoff.setDate(cutoff.getDate() - Number(filters.period))
+    cutoff.setDate(cutoff.getDate() - Number(filters.period) + 1)
 
     return orders.filter((order) => {
       const dateMatches = new Date(order.date) >= cutoff
@@ -75,33 +64,38 @@ export default function App() {
   }, [filters])
 
   const metrics = useMemo(() => {
-    const revenue = filteredOrders.reduce((sum, order) => sum + order.total, 0)
+    const revenue = filteredOrders.filter(order => order.status !== 'Отменён').reduce((sum, order) => sum + order.total, 0)
     const totalOrders = filteredOrders.length
-    const conversion = totalOrders ? (6.4 + totalOrders * 0.17).toFixed(1) : '0.0'
-    const averageCheck = totalOrders ? Math.round(revenue / totalOrders) : 0
+    const delivered = filteredOrders.filter(order => order.status === 'Доставлен').length
+    const validCount = filteredOrders.filter(order => order.status !== 'Отменён').length
+    const averageCheck = validCount ? Math.round(revenue / validCount) : 0
 
     return [
-      { label: 'Выручка', value: `${revenue.toLocaleString('ru-RU')} ₽`, delta: '+18.4%' },
-      { label: 'Заказы', value: totalOrders.toString(), delta: '+9.7%' },
-      { label: 'Конверсия', value: `${conversion}%`, delta: '+1.2 п.п.' },
-      { label: 'Средний чек', value: `${averageCheck.toLocaleString('ru-RU')} ₽`, delta: '+6.1%' },
+      { label: 'Выручка', value: `${revenue.toLocaleString('ru-RU')} ₽`, delta: 'Без отменённых заказов' },
+      { label: 'Заказы', value: totalOrders.toString(), delta: 'В выбранном периоде' },
+      { label: 'Доставлено', value: String(delivered), delta: 'Подтверждённые доставки' },
+      { label: 'Средний чек', value: `${averageCheck.toLocaleString('ru-RU')} ₽`, delta: 'По активным заказам' },
     ]
   }, [filteredOrders])
 
   const exportToExcel = () => {
-    setExportState('Готовим файл...')
-    window.setTimeout(() => {
-      setExportState('Файл выгружен ✓')
-      window.setTimeout(() => setExportState('Экспорт в Excel'), 1800)
-    }, 900)
+    const rows = [['Заказ','Дата','Клиент','Канал','Статус','Сумма'],...filteredOrders.map(order=>[order.id,order.date,order.customer,order.channel,order.status,order.total])]
+    const csv = '\uFEFF' + rows.map(row => row.map(value=>'"'+String(value).replace(/"/g,'""')+'"').join(';')).join('\r\n')
+    const url = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); const a=document.createElement('a'); a.href=url; a.download='orders.csv'; a.click()
+    setTimeout(()=>URL.revokeObjectURL(url),1000); setExportState('CSV подготовлен')
   }
-
+  const dates = [...new Set(filteredOrders.map(order=>order.date))].sort()
+  const chartSeries = {
+    labels:dates.map(date=>new Date(date+'T12:00:00').toLocaleDateString('ru-RU',{day:'numeric',month:'short'})),
+    revenue:dates.map(date=>filteredOrders.filter(order=>order.date===date&&order.status!=='Отменён').reduce((sum,order)=>sum+order.total,0)),
+    orders:dates.map(date=>filteredOrders.filter(order=>order.date===date).length)
+  }
   const lineData = {
-    labels: salesSeries.labels,
+    labels: chartSeries.labels,
     datasets: [
       {
         label: 'Выручка',
-        data: salesSeries.revenue,
+        data: chartSeries.revenue,
         borderColor: '#8b5cf6',
         backgroundColor: 'rgba(139, 92, 246, 0.2)',
         pointBackgroundColor: '#c4b5fd',
@@ -112,11 +106,11 @@ export default function App() {
   }
 
   const barData = {
-    labels: salesSeries.labels,
+    labels: chartSeries.labels,
     datasets: [
       {
         label: 'Заказы',
-        data: salesSeries.orders,
+        data: chartSeries.orders,
         borderRadius: 14,
         backgroundColor: 'rgba(14, 165, 233, 0.8)',
       },
@@ -163,39 +157,39 @@ export default function App() {
     <div className="dashboard-shell">
       <aside className="sidebar">
         <a className="logo" href="#top">
-          Первый<span>Селлер</span>
+          Seller<span>Desk</span>
         </a>
         <nav className="sidebar-nav">
           <a href="#top" className="active">Обзор</a>
           <a href="#orders">Заказы</a>
-          <a href="#alerts">Telegram-бот</a>
+          <a href="#alerts">События</a>
           <a href="#analytics">Аналитика</a>
         </nav>
         <div className="sidebar-card">
           <p>Автоматизация</p>
-          <strong>Webhook + парсер конкурентов</strong>
-          <span>Имитация b2b-инструментов из резюме</span>
+          <strong>Рабочая сводка продавца</strong>
+          <span>Демо-данные · 28 марта — 3 апреля 2026</span>
         </div>
       </aside>
 
       <main className="dashboard-main" id="top">
         <header className="dashboard-header">
           <div>
-            <p className="eyebrow">Marketplace dashboard</p>
-            <h1>Продажи, заказы и алерты в одном интерфейсе</h1>
+            <p className="eyebrow">Обзор магазина</p>
+            <h1>Как идут продажи</h1>
           </div>
 
           <div className="filters-row">
-            <select
+            <select aria-label="Период отчёта"
               value={filters.period}
               onChange={(event) => setFilters((prev) => ({ ...prev, period: event.target.value }))}
             >
-              <option value="3">Последние 3 дня</option>
-              <option value="7">Последние 7 дней</option>
-              <option value="30">Последние 30 дней</option>
+              <option value="3">1–3 апреля</option>
+              <option value="7">28 марта — 3 апреля</option>
+              <option value="30">5 марта — 3 апреля</option>
             </select>
 
-            <select
+            <select aria-label="Статус заказа"
               value={filters.status}
               onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value }))}
             >
@@ -226,7 +220,7 @@ export default function App() {
           <article className="chart-card large">
             <div className="chart-head">
               <h2>Динамика выручки</h2>
-              <span>Chart.js Line</span>
+              <span>Без отменённых заказов</span>
             </div>
             <div className="chart-box">
               <Line data={lineData} options={chartOptions} />
@@ -236,7 +230,7 @@ export default function App() {
           <article className="chart-card">
             <div className="chart-head">
               <h2>Заказы по дням</h2>
-              <span>Bar</span>
+              <span>За выбранный период</span>
             </div>
             <div className="chart-box">
               <Bar data={barData} options={chartOptions} />
@@ -246,7 +240,7 @@ export default function App() {
           <article className="chart-card">
             <div className="chart-head">
               <h2>Статусы заказов</h2>
-              <span>Doughnut</span>
+              <span>Доля по количеству</span>
             </div>
             <div className="chart-box">
               <Doughnut
@@ -261,7 +255,7 @@ export default function App() {
           <article className="orders-panel" id="orders">
             <div className="chart-head">
               <h2>Последние заказы</h2>
-              <span>{filteredOrders.length} записей</span>
+              <span>Записей: {filteredOrders.length}</span>
             </div>
 
             <div className="orders-table">
@@ -289,8 +283,8 @@ export default function App() {
 
           <article className="alerts-panel" id="alerts">
             <div className="chart-head">
-              <h2>Telegram-уведомления</h2>
-              <span>Live feed</span>
+              <h2>Журнал событий</h2>
+              <span>Демо-события</span>
             </div>
 
             <div className="alerts-list">
