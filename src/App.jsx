@@ -156,7 +156,7 @@ export default function App() {
 
   return (
     <div className="dashboard-shell">
-      <aside className="sidebar">
+      <header className="sidebar">
         <a className="logo" href="#top">
           Seller<span>Desk</span>
         </a>
@@ -171,7 +171,7 @@ export default function App() {
           <strong>Рабочая сводка продавца</strong>
           <span>Демо-данные · 28 марта — 3 апреля 2026</span>
         </div>
-      </aside>
+      </header>
 
       <main className="dashboard-main" id="top">
         <header className="dashboard-header">
@@ -299,7 +299,7 @@ export default function App() {
             </div>
           </article>
         </section>
-        <OpenContext/>
+        <details className="sources"><summary>Источники и пояснения</summary><OpenContext/></details>
       </main>
     </div>
   )
